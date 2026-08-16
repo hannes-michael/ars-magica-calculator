@@ -4,6 +4,20 @@ import './App.css'
 type Mode = 'casting' | 'laboratory'
 type CastingKind = 'formulaic' | 'spontaneous'
 
+const loudnessOptions = [
+  { value: 1, label: 'Loud · +1' },
+  { value: 0, label: 'Normal · +0' },
+  { value: -5, label: 'Quiet · -5' },
+  { value: -10, label: 'Silent · -10' },
+]
+
+const gestureOptions = [
+  { value: 1, label: 'Broad · +1' },
+  { value: 0, label: 'Normal · +0' },
+  { value: -2, label: 'Subtle · -2' },
+  { value: -5, label: 'None · -5' },
+]
+
 function NumberField({
   label,
   value,
@@ -38,6 +52,8 @@ function App() {
   const [focus, setFocus] = useState(false)
   const [die, setDie] = useState(7)
   const [spellLevel, setSpellLevel] = useState(20)
+  const [loudness, setLoudness] = useState(0)
+  const [gestures, setGestures] = useState(0)
   const [intelligence, setIntelligence] = useState(2)
   const [magicTheory, setMagicTheory] = useState(3)
   const [labArt, setLabArt] = useState(10)
@@ -50,9 +66,11 @@ function App() {
 
   const casting = useMemo(() => {
     const raw = technique + form + stamina + aura + focusBonus + die
-    const total = kind === 'spontaneous' ? Math.floor(raw / 2) : raw
-    return { raw, total, margin: total - spellLevel }
-  }, [aura, die, focusBonus, form, kind, spellLevel, stamina, technique])
+    const baseTotal = kind === 'spontaneous' ? Math.floor(raw / 2) : raw
+    const total = baseTotal + loudness + gestures
+    const target = spellLevel - (kind === 'formulaic' ? 10 : 0)
+    return { raw, total, target, margin: total - target }
+  }, [aura, die, focusBonus, form, gestures, kind, loudness, spellLevel, stamina, technique])
 
   const laboratory = useMemo(() => {
     const total = intelligence + magicTheory + aura + labArt + labForm + labBonus + assistant
@@ -61,6 +79,8 @@ function App() {
 
   const activeTotal = mode === 'casting' ? casting.total : laboratory.total
   const activeMargin = mode === 'casting' ? casting.margin : laboratory.margin
+  const activeTarget = mode === 'casting' ? casting.target : spellLevel
+  const targetDescription = mode === 'casting' && kind === 'formulaic' ? `Spell level ${spellLevel} − 10` : `Spell level ${spellLevel}`
 
   return (
     <main className="app-shell">
@@ -108,6 +128,18 @@ function App() {
 
           <div className="divider" />
           <div className="subheading"><span>Conditions</span><span className="subheading-note">Applied automatically</span></div>
+          {mode === 'casting' && <div className="condition-row">
+            <div className="condition-copy"><span className="condition-icon">◌</span><div><strong>Loudness</strong><small>How clearly the spell is spoken</small></div></div>
+            <select className="condition-select" aria-label="Loudness" value={loudness} onChange={(event) => setLoudness(Number(event.target.value))}>
+              {loudnessOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+            </select>
+          </div>}
+          {mode === 'casting' && <div className="condition-row">
+            <div className="condition-copy"><span className="condition-icon">⌁</span><div><strong>Gestures</strong><small>Hand movements used while casting</small></div></div>
+            <select className="condition-select" aria-label="Gestures" value={gestures} onChange={(event) => setGestures(Number(event.target.value))}>
+              {gestureOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+            </select>
+          </div>}
           <div className="condition-row">
             <div className="condition-copy"><span className="condition-icon">☼</span><div><strong>Magical aura</strong><small>Local aura modifies every total</small></div></div>
             <input className="compact-number" aria-label="Magical aura" type="number" value={aura} onChange={(event) => setAura(Number(event.target.value) || 0)} />
@@ -128,11 +160,12 @@ function App() {
         <aside className="result-card">
           <div className="result-top"><span>LIVE RESULT</span><span className="live-dot">● updating</span></div>
           <p className="result-label">{mode === 'casting' ? `${kind === 'formulaic' ? 'Formulaic' : 'Spontaneous'} casting total` : labActivity}</p>
+          <div className="target-display"><span>Target</span><b>{activeTarget}</b><small>{mode === 'casting' ? targetDescription : 'Target lab total'}</small></div>
           <div className="total">{activeTotal}</div>
           <div className={`margin ${activeMargin >= 0 ? 'positive' : 'negative'}`}>{activeMargin >= 0 ? `+${activeMargin}` : activeMargin} <span>{activeMargin >= 0 ? 'above target' : 'below target'}</span></div>
           <div className="result-rule" />
-          <div className="breakdown"><div><span>Base total</span><b>{mode === 'casting' ? casting.raw - aura - focusBonus : laboratory.total - aura}</b></div><div><span>Aura</span><b>{aura >= 0 ? `+${aura}` : aura}</b></div>{mode === 'casting' && <div><span>Focus</span><b>+{focusBonus}</b></div>}</div>
-          <div className="formula">{mode === 'casting' ? 'Technique + Form + Sta + die' : 'Int + MT + Art + Form + bonuses'}</div>
+          <div className="breakdown"><div><span>Base total</span><b>{mode === 'casting' ? casting.raw - aura - focusBonus : laboratory.total - aura}</b></div><div><span>Aura</span><b>{aura >= 0 ? `+${aura}` : aura}</b></div>{mode === 'casting' && <><div><span>Focus</span><b>+{focusBonus}</b></div><div><span>Loudness</span><b>{loudness >= 0 ? `+${loudness}` : loudness}</b></div><div><span>Gestures</span><b>{gestures >= 0 ? `+${gestures}` : gestures}</b></div></>}</div>
+          <div className="formula">{mode === 'casting' ? 'Technique + Form + Sta + die + conditions' : 'Int + MT + Art + Form + bonuses'}</div>
         </aside>
       </section>
 
