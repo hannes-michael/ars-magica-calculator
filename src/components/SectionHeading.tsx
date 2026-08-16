@@ -3,7 +3,7 @@ import type { Mode } from '../types/calculator'
 const headings: Record<Mode, { title: string; description: string }> = {
   casting: { title: 'Casting profile', description: 'Build the casting total from the Arts, Form and circumstances.' },
   laboratory: { title: 'Laboratory profile', description: 'Combine your character, specialty and laboratory conditions.' },
-  creation: { title: 'Guideline profile', description: 'Build a spell level from a base guideline and its magnitudes.' },
+  creation: { title: 'Guideline profile', description: 'Choose a Technique and Art, then shape a spell from a potential effect.' },
 }
 
 export function SectionHeading({ mode }: { mode: Mode }) {

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { calculateCasting, calculateCreation, calculateLaboratory } from '../domain/calculations'
-import type { CastingKind, Mode } from '../types/calculator'
+import type { Art, CastingKind, Mode, Technique } from '../types/calculator'
 
 export function useCalculatorState() {
   const [mode, setMode] = useState<Mode>('casting')
@@ -22,6 +22,8 @@ export function useCalculatorState() {
   const [assistant, setAssistant] = useState(0)
   const [labActivity, setLabActivity] = useState('Invent a spell')
   const [baseLevel, setBaseLevel] = useState(5)
+  const [creationTechnique, setCreationTechnique] = useState<Technique>('creo')
+  const [creationArt, setCreationArt] = useState<Art>('animal')
   const [range, setRange] = useState(0)
   const [duration, setDuration] = useState(0)
   const [target, setTarget] = useState(0)
@@ -38,6 +40,7 @@ export function useCalculatorState() {
     gestures, setGestures, intelligence, setIntelligence, magicTheory, setMagicTheory,
     labTechnique, setLabTechnique, labForm, setLabForm, labBonus, setLabBonus, assistant, setAssistant,
     labActivity, setLabActivity, baseLevel, setBaseLevel, range, setRange, duration, setDuration,
-    target, setTarget, creationMagnitudes, setCreationMagnitudes, focusBonus, casting, laboratory, creation,
+    target, setTarget, creationMagnitudes, setCreationMagnitudes, creationTechnique, setCreationTechnique,
+    creationArt, setCreationArt, focusBonus, casting, laboratory, creation,
   }
 }
