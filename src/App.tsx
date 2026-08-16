@@ -2,10 +2,7 @@ import { useMemo, useState } from 'react'
 import './App.css'
 
 type Mode = 'casting' | 'laboratory'
-type Focus = 'none' | 'minor' | 'major'
 type CastingKind = 'formulaic' | 'spontaneous'
-
-const focusValues: Record<Focus, number> = { none: 0, minor: 5, major: 10 }
 
 function NumberField({
   label,
@@ -38,7 +35,7 @@ function App() {
   const [form, setForm] = useState(10)
   const [stamina, setStamina] = useState(2)
   const [aura, setAura] = useState(0)
-  const [focus, setFocus] = useState<Focus>('none')
+  const [focus, setFocus] = useState(false)
   const [die, setDie] = useState(7)
   const [spellLevel, setSpellLevel] = useState(20)
   const [intelligence, setIntelligence] = useState(2)
@@ -49,11 +46,13 @@ function App() {
   const [assistant, setAssistant] = useState(0)
   const [labActivity, setLabActivity] = useState('Invent a spell')
 
+  const focusBonus = focus ? Math.min(technique, form) : 0
+
   const casting = useMemo(() => {
-    const raw = technique + form + stamina + aura + focusValues[focus] + die
+    const raw = technique + form + stamina + aura + focusBonus + die
     const total = kind === 'spontaneous' ? Math.floor(raw / 2) : raw
     return { raw, total, margin: total - spellLevel }
-  }, [aura, die, focus, form, kind, spellLevel, stamina, technique])
+  }, [aura, die, focusBonus, form, kind, spellLevel, stamina, technique])
 
   const laboratory = useMemo(() => {
     const total = intelligence + magicTheory + aura + labArt + labForm + labBonus + assistant
@@ -115,9 +114,9 @@ function App() {
           </div>
           {mode === 'casting' && <div className="condition-row focus-row">
             <div className="condition-copy"><span className="condition-icon">◈</span><div><strong>Magic focus</strong><small>Choose a focus bonus for this effect</small></div></div>
-            <select value={focus} onChange={(event) => setFocus(event.target.value as Focus)} aria-label="Magic focus">
-              <option value="none">None · +0</option><option value="minor">Minor · +5</option><option value="major">Major · +10</option>
-            </select>
+            <button className={`focus-toggle ${focus ? 'enabled' : ''}`} type="button" onClick={() => setFocus((value) => !value)} aria-pressed={focus}>
+              {focus ? `On · +${focusBonus}` : 'Off · +0'}
+            </button>
           </div>}
           <div className="target-row">
             <label htmlFor="target">{mode === 'casting' ? 'Spell level' : 'Target lab total'}</label>
@@ -132,7 +131,7 @@ function App() {
           <div className="total">{activeTotal}</div>
           <div className={`margin ${activeMargin >= 0 ? 'positive' : 'negative'}`}>{activeMargin >= 0 ? `+${activeMargin}` : activeMargin} <span>{activeMargin >= 0 ? 'above target' : 'below target'}</span></div>
           <div className="result-rule" />
-          <div className="breakdown"><div><span>Base total</span><b>{mode === 'casting' ? casting.raw - aura - focusValues[focus] : laboratory.total - aura}</b></div><div><span>Aura</span><b>{aura >= 0 ? `+${aura}` : aura}</b></div>{mode === 'casting' && <div><span>Focus</span><b>+{focusValues[focus]}</b></div>}</div>
+          <div className="breakdown"><div><span>Base total</span><b>{mode === 'casting' ? casting.raw - aura - focusBonus : laboratory.total - aura}</b></div><div><span>Aura</span><b>{aura >= 0 ? `+${aura}` : aura}</b></div>{mode === 'casting' && <div><span>Focus</span><b>+{focusBonus}</b></div>}</div>
           <div className="formula">{mode === 'casting' ? 'Technique + Form + Sta + die' : 'Int + MT + Art + Form + bonuses'}</div>
         </aside>
       </section>
