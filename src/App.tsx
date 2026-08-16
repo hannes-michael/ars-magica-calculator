@@ -50,19 +50,23 @@ function App() {
   const [stamina, setStamina] = useState(2)
   const [aura, setAura] = useState(0)
   const [focus, setFocus] = useState(false)
-  const [die, setDie] = useState(7)
+  const [die, setDie] = useState(0)
   const [spellLevel, setSpellLevel] = useState(20)
   const [loudness, setLoudness] = useState(0)
   const [gestures, setGestures] = useState(0)
   const [intelligence, setIntelligence] = useState(2)
   const [magicTheory, setMagicTheory] = useState(3)
-  const [labArt, setLabArt] = useState(10)
+  const [labTechnique, setLabTechnique] = useState(10)
   const [labForm, setLabForm] = useState(10)
   const [labBonus, setLabBonus] = useState(0)
   const [assistant, setAssistant] = useState(0)
   const [labActivity, setLabActivity] = useState('Invent a spell')
 
-  const focusBonus = focus ? Math.min(technique, form) : 0
+  const focusBonus = focus
+    ? mode === 'casting'
+      ? Math.min(technique, form)
+      : Math.min(labTechnique, labForm)
+    : 0
 
   const casting = useMemo(() => {
     const raw = technique + form + stamina + aura + focusBonus + die
@@ -73,9 +77,9 @@ function App() {
   }, [aura, die, focusBonus, form, gestures, kind, loudness, spellLevel, stamina, technique])
 
   const laboratory = useMemo(() => {
-    const total = intelligence + magicTheory + aura + labArt + labForm + labBonus + assistant
+    const total = intelligence + magicTheory + aura + labTechnique + labForm + labBonus + assistant + focusBonus
     return { total, margin: total - spellLevel }
-  }, [assistant, aura, intelligence, labArt, labBonus, labForm, magicTheory, spellLevel])
+  }, [assistant, aura, focusBonus, intelligence, labBonus, labForm, labTechnique, magicTheory, spellLevel])
 
   const activeTotal = mode === 'casting' ? casting.total : laboratory.total
   const activeMargin = mode === 'casting' ? casting.margin : laboratory.margin
@@ -119,7 +123,7 @@ function App() {
             <div className="field-grid two">
               <NumberField label="Intelligence" value={intelligence} onChange={setIntelligence} />
               <NumberField label="Magic Theory" value={magicTheory} onChange={setMagicTheory} />
-              <NumberField label="Art" value={labArt} onChange={setLabArt} help="Relevant Art score" />
+              <NumberField label="Technique" value={labTechnique} onChange={setLabTechnique} help="Relevant Technique score" />
               <NumberField label="Form" value={labForm} onChange={setLabForm} help="Relevant Form score" />
               <NumberField label="Lab bonus" value={labBonus} onChange={setLabBonus} help="Specialization and equipment" />
               <NumberField label="Assistant" value={assistant} onChange={setAssistant} help="Total assistant contribution" />
@@ -144,12 +148,12 @@ function App() {
             <div className="condition-copy"><span className="condition-icon">☼</span><div><strong>Magical aura</strong><small>Local aura modifies every total</small></div></div>
             <input className="compact-number" aria-label="Magical aura" type="number" value={aura} onChange={(event) => setAura(Number(event.target.value) || 0)} />
           </div>
-          {mode === 'casting' && <div className="condition-row focus-row">
+          <div className="condition-row focus-row">
             <div className="condition-copy"><span className="condition-icon">◈</span><div><strong>Magic focus</strong><small>Choose a focus bonus for this effect</small></div></div>
             <button className={`focus-toggle ${focus ? 'enabled' : ''}`} type="button" onClick={() => setFocus((value) => !value)} aria-pressed={focus}>
               {focus ? `On · +${focusBonus}` : 'Off · +0'}
             </button>
-          </div>}
+          </div>
           <div className="target-row">
             <label htmlFor="target">{mode === 'casting' ? 'Spell level' : 'Target lab total'}</label>
             <input id="target" type="number" value={spellLevel} onChange={(event) => setSpellLevel(Number(event.target.value) || 0)} />
@@ -158,18 +162,17 @@ function App() {
         </div>
 
         <aside className="result-card">
-          <div className="result-top"><span>LIVE RESULT</span><span className="live-dot">● updating</span></div>
           <p className="result-label">{mode === 'casting' ? `${kind === 'formulaic' ? 'Formulaic' : 'Spontaneous'} casting total` : labActivity}</p>
           <div className="target-display"><span>Target</span><b>{activeTarget}</b><small>{mode === 'casting' ? targetDescription : 'Target lab total'}</small></div>
           <div className="total">{activeTotal}</div>
           <div className={`margin ${activeMargin >= 0 ? 'positive' : 'negative'}`}>{activeMargin >= 0 ? `+${activeMargin}` : activeMargin} <span>{activeMargin >= 0 ? 'above target' : 'below target'}</span></div>
           <div className="result-rule" />
-          <div className="breakdown"><div><span>Base total</span><b>{mode === 'casting' ? casting.raw - aura - focusBonus : laboratory.total - aura}</b></div><div><span>Aura</span><b>{aura >= 0 ? `+${aura}` : aura}</b></div>{mode === 'casting' && <><div><span>Focus</span><b>+{focusBonus}</b></div><div><span>Loudness</span><b>{loudness >= 0 ? `+${loudness}` : loudness}</b></div><div><span>Gestures</span><b>{gestures >= 0 ? `+${gestures}` : gestures}</b></div></>}</div>
-          <div className="formula">{mode === 'casting' ? 'Technique + Form + Sta + die + conditions' : 'Int + MT + Art + Form + bonuses'}</div>
+          <div className="breakdown"><div><span>Base total</span><b>{mode === 'casting' ? casting.raw - aura - focusBonus : laboratory.total - aura - focusBonus}</b></div><div><span>Aura</span><b>{aura >= 0 ? `+${aura}` : aura}</b></div><div><span>Focus</span><b>+{focusBonus}</b></div>{mode === 'casting' && <><div><span>Loudness</span><b>{loudness >= 0 ? `+${loudness}` : loudness}</b></div><div><span>Gestures</span><b>{gestures >= 0 ? `+${gestures}` : gestures}</b></div></>}</div>
+          <div className="formula">{mode === 'casting' ? 'Technique + Form + Sta + die + conditions' : 'Int + MT + Technique + Form + bonuses'}</div>
         </aside>
       </section>
 
-      <footer><span>ARS MAGICA CALCULATOR</span><span>Arts and Forms stay numeric by design.</span><span>✦</span></footer>
+      <footer><span>ARS MAGICA CALCULATOR</span><span>✦</span></footer>
     </main>
   )
 }
